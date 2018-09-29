@@ -66,7 +66,7 @@ TextureProgram::TextureProgram() {
 		"		float amt = smoothstep(spot_outer_inner.x, spot_outer_inner.y, d);\n"
 		"		float shadow = textureProj(spot_depth_tex, spotPosition);\n"
 		"		total_light += shadow * nl * amt * spot_color;\n"
-		//"		fragColor = vec4(s,s,s, 1.0);\n" //DEBUG: just show shadow
+		// "		fragColor = vec4(s,s,s, 1.0);\n" //DEBUG: just show shadow
 		"	}\n"
 
 		"	fragColor = texture(tex, texCoord) * vec4(color.rgb * total_light, color.a);\n"
