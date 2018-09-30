@@ -30,4 +30,9 @@ struct GameMode : public Mode {
 
 	float camera_spin = 0.0f;
 	float spot_spin = 0.0f;
+	uint8_t r = 200;
+	uint8_t g = 200;
+	uint8_t b = 200;
+	uint8_t a = 200;
+	// glm::u8vec4 color(200, 200, 200, 200);
 };

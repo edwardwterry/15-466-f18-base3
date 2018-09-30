@@ -15,6 +15,8 @@
 #include "depth_program.hpp"
 
 #include <glm/gtc/type_ptr.hpp>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/string_cast.hpp>
 
 #include <iostream>
 #include <fstream>
@@ -124,7 +126,9 @@ Load< GLuint > white_tex(LoadTagDefault, [](){
 	GLuint tex = 0;
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
-	glm::u8vec4 white(0xff, 0xff, 0xff, 0xff);
+	// glm::u8vec4 white(0xff, 0xff, 0xff, 0xff);
+	// glm::u8vec4 white(16, 119, 159, 15);
+	glm::u8vec4 white(0, 0, 0, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(white));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -246,8 +250,20 @@ bool GameMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void GameMode::update(float elapsed) {
+	spot_spin += elapsed * 0.0f;
 	camera_parent_transform->rotation = glm::angleAxis(camera_spin, glm::vec3(0.0f, 0.0f, 1.0f));
 	spot_parent_transform->rotation = glm::angleAxis(spot_spin, glm::vec3(0.0f, 0.0f, 1.0f));
+
+	b -= (uint8_t)(elapsed * 100.f);
+	glm::u8vec4 color(r, g, b, a);
+	glBindTexture(GL_TEXTURE_2D, *white_tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(color));
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 //GameMode will render to some offscreen framebuffer(s).
@@ -331,7 +347,7 @@ struct Framebuffers {
 } fbs;
 
 void GameMode::draw(glm::uvec2 const &drawable_size) {
-	fbs.allocate(drawable_size, glm::uvec2(512, 512));
+	fbs.allocate(drawable_size, glm::uvec2(512, 512)); // only called if window size changes
 
 	//Draw scene to shadow map for spotlight:
 	glBindFramebuffer(GL_FRAMEBUFFER, fbs.shadow_fb);
@@ -419,9 +435,7 @@ void GameMode::draw(glm::uvec2 const &drawable_size) {
 	glActiveTexture(GL_TEXTURE0);
 
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
 	GL_ERRORS();
-
 
 	//Copy scene from color buffer to screen, performing post-processing effects:
 	glActiveTexture(GL_TEXTURE0);
