@@ -10,6 +10,7 @@
 #include <glm/gtc/quaternion.hpp>
 
 #include <vector>
+#include <chrono>
 
 // The 'GameMode' mode is the main gameplay mode:
 
@@ -34,5 +35,13 @@ struct GameMode : public Mode {
 	uint8_t g = 200;
 	uint8_t b = 200;
 	uint8_t a = 200;
-	// glm::u8vec4 color(200, 200, 200, 200);
+
+	struct Controls{
+		bool up = 0;
+		bool down = 0;
+		bool left = 0;
+		bool right = 0;
+		bool lock = 0;
+	} controls;
+
 };

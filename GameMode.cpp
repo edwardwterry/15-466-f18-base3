@@ -26,7 +26,7 @@
 
 
 Load< MeshBuffer > meshes(LoadTagDefault, [](){
-	return new MeshBuffer(data_path("vignette.pnct"));
+	return new MeshBuffer(data_path("boxes.pnct"));
 });
 
 Load< GLuint > meshes_for_texture_program(LoadTagDefault, [](){
@@ -126,8 +126,6 @@ Load< GLuint > white_tex(LoadTagDefault, [](){
 	GLuint tex = 0;
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
-	// glm::u8vec4 white(0xff, 0xff, 0xff, 0xff);
-	// glm::u8vec4 white(16, 119, 159, 15);
 	glm::u8vec4 white(0, 0, 0, 0);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(white));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -163,7 +161,7 @@ Load< Scene > scene(LoadTagDefault, [](){
 
 
 	//load transform hierarchy:
-	ret->load(data_path("vignette.scene"), [&](Scene &s, Scene::Transform *t, std::string const &m){
+	ret->load(data_path("boxes.scene"), [&](Scene &s, Scene::Transform *t, std::string const &m){
 		Scene::Object *obj = s.new_object(t);
 
 		obj->programs[Scene::Object::ProgramTypeDefault] = texture_program_info;
@@ -246,6 +244,22 @@ bool GameMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 
 	}
 
+	if (evt.type == SDL_KEYDOWN || evt.type == SDL_KEYUP) {
+		if (evt.key.keysym.scancode == SDL_SCANCODE_W) {
+			controls.up = (evt.type == SDL_KEYDOWN);
+			return true;
+		} else if (evt.key.keysym.scancode == SDL_SCANCODE_S) {
+			controls.down = (evt.type == SDL_KEYDOWN);
+			return true;
+		} else if (evt.key.keysym.scancode == SDL_SCANCODE_A) {
+			controls.left = (evt.type == SDL_KEYDOWN);
+			return true;
+		} else if (evt.key.keysym.scancode == SDL_SCANCODE_D) {
+			controls.right = (evt.type == SDL_KEYDOWN);
+			return true;
+		} 
+	}
+
 	return false;
 }
 
@@ -254,8 +268,18 @@ void GameMode::update(float elapsed) {
 	camera_parent_transform->rotation = glm::angleAxis(camera_spin, glm::vec3(0.0f, 0.0f, 1.0f));
 	spot_parent_transform->rotation = glm::angleAxis(spot_spin, glm::vec3(0.0f, 0.0f, 1.0f));
 
-	b -= (uint8_t)(elapsed * 100.f);
-	glm::u8vec4 color(r, g, b, a);
+	auto current_time = std::chrono::high_resolution_clock::now();
+	static auto previous_time = current_time;
+	float time_since_cmd = std::chrono::duration< float >(current_time - previous_time).count();
+	// previous_time = current_time;
+
+	if (controls.up){
+		previous_time = current_time;
+	}
+
+	// b -= (uint8_t)(elapsed * 500.f);
+	b = static_cast<uint8_t>(exp(-2*time_since_cmd) * 255);
+	glm::u8vec4 color(0, b, b, a);
 	glBindTexture(GL_TEXTURE_2D, *white_tex);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(color));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
