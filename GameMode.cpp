@@ -122,12 +122,12 @@ Load< GLuint > marble_tex(LoadTagDefault, [](){
 	return new GLuint(load_texture(data_path("textures/marble.png")));
 });
 
-Load< GLuint > white_tex(LoadTagDefault, [](){
+Load< GLuint > blue_tex(LoadTagDefault, [](){
 	GLuint tex = 0;
 	glGenTextures(1, &tex);
 	glBindTexture(GL_TEXTURE_2D, tex);
-	glm::u8vec4 white(0, 0, 0, 0);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(white));
+	glm::u8vec4 color(0, 0, 0, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(color));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -137,6 +137,50 @@ Load< GLuint > white_tex(LoadTagDefault, [](){
 	return new GLuint(tex);
 });
 
+Load< GLuint > green_tex(LoadTagDefault, [](){
+	GLuint tex = 0;
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glm::u8vec4 color(0, 0, 0, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(color));
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	return new GLuint(tex);
+});
+
+Load< GLuint > orange_tex(LoadTagDefault, [](){
+	GLuint tex = 0;
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glm::u8vec4 color(0, 0, 0, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(color));
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	return new GLuint(tex);
+});
+
+Load< GLuint > yellow_tex(LoadTagDefault, [](){
+	GLuint tex = 0;
+	glGenTextures(1, &tex);
+	glBindTexture(GL_TEXTURE_2D, tex);
+	glm::u8vec4 color(0, 0, 0, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(color));
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	return new GLuint(tex);
+});
 
 Scene::Transform *camera_parent_transform = nullptr;
 Scene::Camera *camera = nullptr;
@@ -167,11 +211,15 @@ Load< Scene > scene(LoadTagDefault, [](){
 		obj->programs[Scene::Object::ProgramTypeDefault] = texture_program_info;
 		if (t->name == "Platform") {
 			obj->programs[Scene::Object::ProgramTypeDefault].textures[0] = *wood_tex;
-		} else if (t->name == "Pedestal") {
-			obj->programs[Scene::Object::ProgramTypeDefault].textures[0] = *marble_tex;
-		} else {
-			obj->programs[Scene::Object::ProgramTypeDefault].textures[0] = *white_tex;
-		}
+		} else if (t->name == "Cube_Blue") {
+			obj->programs[Scene::Object::ProgramTypeDefault].textures[0] = *blue_tex;
+		} else if (t->name == "Cube_Green") {
+			obj->programs[Scene::Object::ProgramTypeDefault].textures[0] = *green_tex;
+		} else if (t->name == "Cube_Orange") {
+			obj->programs[Scene::Object::ProgramTypeDefault].textures[0] = *orange_tex;
+		} else if (t->name == "Cube_Yellow") {
+			obj->programs[Scene::Object::ProgramTypeDefault].textures[0] = *yellow_tex;
+		} 
 
 		obj->programs[Scene::Object::ProgramTypeShadow] = depth_program_info;
 
@@ -269,19 +317,65 @@ void GameMode::update(float elapsed) {
 	spot_parent_transform->rotation = glm::angleAxis(spot_spin, glm::vec3(0.0f, 0.0f, 1.0f));
 
 	auto current_time = std::chrono::high_resolution_clock::now();
-	static auto previous_time = current_time;
-	float time_since_cmd = std::chrono::duration< float >(current_time - previous_time).count();
-	// previous_time = current_time;
+	static auto previous_time_r = current_time;
+	static auto previous_time_g = current_time;
+	static auto previous_time_b = current_time;
+	static auto previous_time_y = current_time;
+	float time_since_cmd_r = std::chrono::duration< float >(current_time - previous_time_r).count();
+	float time_since_cmd_g = std::chrono::duration< float >(current_time - previous_time_g).count();
+	float time_since_cmd_b = std::chrono::duration< float >(current_time - previous_time_b).count();
+	float time_since_cmd_y = std::chrono::duration< float >(current_time - previous_time_y).count();
 
 	if (controls.up){
-		previous_time = current_time;
+		previous_time_b = current_time;
+	}
+	if (controls.down){
+		previous_time_r = current_time;
+	}
+	if (controls.left){
+		previous_time_g = current_time;
+	}
+	if (controls.right){
+		previous_time_y = current_time;
 	}
 
-	// b -= (uint8_t)(elapsed * 500.f);
-	b = static_cast<uint8_t>(exp(-2*time_since_cmd) * 255);
-	glm::u8vec4 color(0, b, b, a);
-	glBindTexture(GL_TEXTURE_2D, *white_tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(color));
+	uint8_t x_r = static_cast<uint8_t>(exp(-2*time_since_cmd_r) * 255);
+	glm::u8vec4 r(x_r, 0, 0, 255);
+	glBindTexture(GL_TEXTURE_2D, *orange_tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(r));
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	uint8_t x_g = static_cast<uint8_t>(exp(-2*time_since_cmd_g) * 255);
+	glm::u8vec4 g(0, x_g, 0, 255);
+	glBindTexture(GL_TEXTURE_2D, *green_tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(g));
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	uint8_t x_b = static_cast<uint8_t>(exp(-2*time_since_cmd_b) * 255);
+	glm::u8vec4 b(0, x_b, x_b, 255);
+	glBindTexture(GL_TEXTURE_2D, *blue_tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(b));
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	uint8_t x_y = static_cast<uint8_t>(exp(-2*time_since_cmd_y) * 255);
+	glm::u8vec4 y(x_y, x_y, 0, 255);
+	glBindTexture(GL_TEXTURE_2D, *yellow_tex);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(y));
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

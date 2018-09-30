@@ -31,10 +31,10 @@ struct GameMode : public Mode {
 
 	float camera_spin = 0.0f;
 	float spot_spin = 0.0f;
-	uint8_t r = 200;
-	uint8_t g = 200;
-	uint8_t b = 200;
-	uint8_t a = 200;
+	// uint8_t r = 200;
+	// uint8_t g = 200;
+	// uint8_t b = 200;
+	// uint8_t a = 200;
 
 	struct Controls{
 		bool up = 0;
@@ -43,5 +43,12 @@ struct GameMode : public Mode {
 		bool right = 0;
 		bool lock = 0;
 	} controls;
+
+	struct TimeSinceCmd{
+		float r;
+		float g;
+		float b;
+		float y;
+	} time_since_cmd;
 
 };
