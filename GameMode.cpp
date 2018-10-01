@@ -312,76 +312,146 @@ bool GameMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void GameMode::update(float elapsed) {
-	spot_spin += elapsed * 0.0f;
-	camera_parent_transform->rotation = glm::angleAxis(camera_spin, glm::vec3(0.0f, 0.0f, 1.0f));
-	spot_parent_transform->rotation = glm::angleAxis(spot_spin, glm::vec3(0.0f, 0.0f, 1.0f));
-
+	// spot_spin += elapsed * 0.0f;
+	// camera_parent_transform->rotation = glm::angleAxis(camera_spin, glm::vec3(0.0f, 0.0f, 1.0f));
+	// spot_parent_transform->rotation = glm::angleAxis(spot_spin, glm::vec3(0.0f, 0.0f, 1.0f));
+	
 	auto current_time = std::chrono::high_resolution_clock::now();
 	static auto previous_time_r = current_time;
 	static auto previous_time_g = current_time;
 	static auto previous_time_b = current_time;
 	static auto previous_time_y = current_time;
+	static auto cube_play_time = current_time;
+
+	std::mt19937 mt(0xbead1234);
+
+	if (reset_sequence){
+		target_sequence.clear();
+		reset_sequence = false;
+		index_to_play = 0;
+		playing_target_sequence = true;
+		append_to_sequence = true;
+	}
+
+	if (append_to_sequence){
+		uint32_t random_number = mt() % 4;
+		target_sequence.push_back(random_number);
+		// std::cout<<target_sequence.back()<<std::endl;
+		// std::cout<<random_number<<std::endl;
+		append_to_sequence = false;
+	}
+
+	if (!playing_target_sequence){ // process control inputs
+		if (controls.up && !prev_controls.up){ // need to release key and press again before registering
+			previous_time_b = current_time;
+			interaction_record.push_back(0);
+		}
+		if (controls.down && !prev_controls.down){
+			previous_time_r = current_time;
+			interaction_record.push_back(2);
+		}
+		if (controls.left && !prev_controls.left){
+			previous_time_g = current_time;
+			interaction_record.push_back(1);
+		}
+		if (controls.right && !prev_controls.right){
+			previous_time_y = current_time;
+			interaction_record.push_back(3);
+		}
+		prev_controls = controls;
+	}
+
+	if (!interaction_record.empty()){
+		if (interaction_record.back() != target_sequence[interaction_record.size()]){
+			reset_sequence = true;
+		} else append_to_sequence = true;
+	}
+
 	float time_since_cmd_r = std::chrono::duration< float >(current_time - previous_time_r).count();
 	float time_since_cmd_g = std::chrono::duration< float >(current_time - previous_time_g).count();
 	float time_since_cmd_b = std::chrono::duration< float >(current_time - previous_time_b).count();
 	float time_since_cmd_y = std::chrono::duration< float >(current_time - previous_time_y).count();
+	float time_since_last_cube = std::chrono::duration< float >(current_time - cube_play_time).count();
 
-	if (controls.up){
-		previous_time_b = current_time;
+	if (playing_target_sequence){ // play target 
+		if (time_since_last_cube > delay_between_cubes && interaction_record.size() != target_sequence.size()){
+			switch (target_sequence[index_to_play]){
+				case 0:
+					previous_time_b = current_time;
+					index_to_play++;
+					break;
+				case 1:
+					previous_time_g = current_time;
+					index_to_play++;
+					break;
+				case 2:
+					previous_time_r = current_time;
+					index_to_play++;
+					break;
+				case 3:
+					previous_time_y = current_time;
+					index_to_play++;
+					break;
+				default:
+					break;															
+			}
+			cube_play_time = current_time;
+		}
 	}
-	if (controls.down){
-		previous_time_r = current_time;
+
+	std::cout<<"Target sequence: ";
+	for (uint32_t i = 0; i < target_sequence.size(); i++){
+		std::cout<<target_sequence[i]<<" ";
 	}
-	if (controls.left){
-		previous_time_g = current_time;
+	std::cout<<"\n";
+
+	if (index_to_play == target_sequence.size()) playing_target_sequence = false;
+
+	{ // change cube colors
+		uint8_t x_r = static_cast<uint8_t>(exp(-2*time_since_cmd_r) * 255);
+		glm::u8vec4 r(x_r, 0, 0, 255);
+		glBindTexture(GL_TEXTURE_2D, *orange_tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(r));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		uint8_t x_g = static_cast<uint8_t>(exp(-2*time_since_cmd_g) * 255);
+		glm::u8vec4 g(0, x_g, 0, 255);
+		glBindTexture(GL_TEXTURE_2D, *green_tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(g));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		uint8_t x_b = static_cast<uint8_t>(exp(-2*time_since_cmd_b) * 255);
+		glm::u8vec4 b(0, x_b, x_b, 255);
+		glBindTexture(GL_TEXTURE_2D, *blue_tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(b));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 0);
+
+		uint8_t x_y = static_cast<uint8_t>(exp(-2*time_since_cmd_y) * 255);
+		glm::u8vec4 y(x_y, x_y, 0, 255);
+		glBindTexture(GL_TEXTURE_2D, *yellow_tex);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(y));
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+		glGenerateMipmap(GL_TEXTURE_2D);
+		glBindTexture(GL_TEXTURE_2D, 0);
 	}
-	if (controls.right){
-		previous_time_y = current_time;
-	}
-
-	uint8_t x_r = static_cast<uint8_t>(exp(-2*time_since_cmd_r) * 255);
-	glm::u8vec4 r(x_r, 0, 0, 255);
-	glBindTexture(GL_TEXTURE_2D, *orange_tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(r));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	uint8_t x_g = static_cast<uint8_t>(exp(-2*time_since_cmd_g) * 255);
-	glm::u8vec4 g(0, x_g, 0, 255);
-	glBindTexture(GL_TEXTURE_2D, *green_tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(g));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	uint8_t x_b = static_cast<uint8_t>(exp(-2*time_since_cmd_b) * 255);
-	glm::u8vec4 b(0, x_b, x_b, 255);
-	glBindTexture(GL_TEXTURE_2D, *blue_tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(b));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, 0);
-
-	uint8_t x_y = static_cast<uint8_t>(exp(-2*time_since_cmd_y) * 255);
-	glm::u8vec4 y(x_y, x_y, 0, 255);
-	glBindTexture(GL_TEXTURE_2D, *yellow_tex);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, glm::value_ptr(y));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glGenerateMipmap(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 //GameMode will render to some offscreen framebuffer(s).

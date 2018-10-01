@@ -6,11 +6,13 @@
 #include "GL.hpp"
 
 #include <SDL.h>
+#include <time.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
 #include <vector>
 #include <chrono>
+#include <random>
 
 // The 'GameMode' mode is the main gameplay mode:
 
@@ -31,24 +33,22 @@ struct GameMode : public Mode {
 
 	float camera_spin = 0.0f;
 	float spot_spin = 0.0f;
-	// uint8_t r = 200;
-	// uint8_t g = 200;
-	// uint8_t b = 200;
-	// uint8_t a = 200;
 
 	struct Controls{
 		bool up = 0;
 		bool down = 0;
 		bool left = 0;
 		bool right = 0;
-		bool lock = 0;
 	} controls;
 
-	struct TimeSinceCmd{
-		float r;
-		float g;
-		float b;
-		float y;
-	} time_since_cmd;
+	Controls prev_controls;
 
+	std::vector< uint32_t > target_sequence;
+	std::vector< uint32_t > interaction_record;
+	bool reset_sequence = true;
+	bool append_to_sequence = true;
+	uint32_t index_to_play = 0; // which index of the sequence you're comparing against
+	// float warmup = 0.0f;
+	float delay_between_cubes = 0.5f;
+	bool playing_target_sequence = false;
 };
