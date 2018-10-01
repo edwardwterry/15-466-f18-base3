@@ -280,18 +280,6 @@ bool GameMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 		return false;
 	}
 
-	if (evt.type == SDL_MOUSEMOTION) {
-		if (evt.motion.state & SDL_BUTTON(SDL_BUTTON_LEFT)) {
-			camera_spin += 5.0f * evt.motion.xrel / float(window_size.x);
-			return true;
-		}
-		if (evt.motion.state & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
-			spot_spin += 5.0f * evt.motion.xrel / float(window_size.x);
-			return true;
-		}
-
-	}
-
 	if (evt.type == SDL_KEYDOWN || evt.type == SDL_KEYUP) {
 		if (evt.key.keysym.scancode == SDL_SCANCODE_W) {
 			controls.up = (evt.type == SDL_KEYDOWN);
@@ -322,7 +310,6 @@ void GameMode::update(float elapsed) {
 	if (reset_sequence){
 		target_sequence.clear();
 		reset_sequence = false;
-		// index_to_play = 0;
 		playing_target_sequence = true;
 		append_to_sequence = true;
 	}
@@ -348,7 +335,6 @@ void GameMode::update(float elapsed) {
 	}
 
 	if (!interaction_record.empty()){
-		// std::cout<<"ir back: "<<interaction_record.back()<<"ts: "<<target_sequence[interaction_record.size() - 1]<<std::endl;
 		if (interaction_record.back() != target_sequence[interaction_record.size() - 1]){
 			interaction_record.clear();
 			reset_sequence = true;
@@ -356,6 +342,7 @@ void GameMode::update(float elapsed) {
 			if (interaction_record.size() == target_sequence.size()) {
 				append_to_sequence = true;
 				playing_target_sequence = true;
+				cube_play_time = current_time;
 			}
 		}
 	}
@@ -374,7 +361,6 @@ void GameMode::update(float elapsed) {
 	float time_since_last_cube = std::chrono::duration< float >(current_time - cube_play_time).count();
 
 	if (playing_target_sequence && time_since_last_cube > delay_between_cubes){ // play target 
-		// std::cout<<"ts ind to play: "<<target_sequence[index_to_play]<<std::endl;
 		switch (target_sequence[index_to_play]){
 			case 0:
 				previous_time_b = current_time;
@@ -396,20 +382,18 @@ void GameMode::update(float elapsed) {
 				break;															
 		}
 		cube_play_time = current_time;
-		// std::cout<<"ind to play: "<<index_to_play<<"targ seq size"<<target_sequence.size()<<std::endl;
 		// stop playing at end of sequence
 		if (index_to_play == (target_sequence.size())){
 			playing_target_sequence = false;
 			index_to_play = 0;
-			// reset_sequence = true;
 		} 
 	}
 
-	std::cout<<"Target sequence: ";
-	for (const auto & elm : target_sequence){
-		std::cout<<elm<<" ";
-	}
-	std::cout<<"\n";
+	// std::cout<<"Target sequence: ";
+	// for (const auto & elm : target_sequence){
+	// 	std::cout<<elm<<" ";
+	// }
+	// std::cout<<"\n";
 
 
 	{ // change cube colors
