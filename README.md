@@ -1,11 +1,11 @@
 # Game Information
 (Note: fill in this portion with information about your game.)
 
-Title: (TODO: your game's title)
+Title: Musical Bloom
 
-Author: (TODO: your name)
+Author: Edward Terry
 
-Design Document: [TODO: name of design document](TODO: link to design document)
+Design Document: Musical Bloom (http://graphics.cs.cmu.edu/courses/15-466-f18/game3-designs/ishmaelj/)
 
 Screen Shot:
 
@@ -13,15 +13,17 @@ Screen Shot:
 
 How To Play:
 
-TODO: describe the controls and (if needed) goals/strategy.
+WASD corresponds to the layout of the boxes on the screen. A sequence of patterns will appear on the screen. Follow the pattern by pressing the keys in the correct sequence. If you miss any elements in the sequence, a new pattern is generated and you start from the beginning.
 
 Changes From The Design Document:
 
-TODO: what did you need to add/remove/modify from the original design? Why?
+I didn't apply either of the two elements in the title... I didn't do music because I integrated it into game 1 and the bloom was a bridge too far for my current knowledge.
 
 Good / Bad / Ugly Code:
 
-TODO: provide examples of code you wrote from this project that you think is good (elegant, simple, useful), bad (hack-y, brittle, unreadable), and ugly (particularly inelegant). Provide a sentence or two of justification for the examples.
+Good: exponential decay of color value based on time since last activation; blocking of repeat key presses
+Bad: lots of boolean flags to represent state transitions in the GameMode::update() block; could have used an enum to associate cube indices with colors/positions, but this is hard-coded
+Ugly: 4x copies of the code to change the cube colors (but in my defense, Stupid Code! "Laziness. Do only what needs doing. If it needs to go faster or be extended, you can re-write it later.")
 
 # Changes In This Base Code
 
