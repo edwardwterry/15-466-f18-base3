@@ -312,10 +312,6 @@ bool GameMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 }
 
 void GameMode::update(float elapsed) {
-	// spot_spin += elapsed * 0.0f;
-	// camera_parent_transform->rotation = glm::angleAxis(camera_spin, glm::vec3(0.0f, 0.0f, 1.0f));
-	// spot_parent_transform->rotation = glm::angleAxis(spot_spin, glm::vec3(0.0f, 0.0f, 1.0f));
-	
 	auto current_time = std::chrono::high_resolution_clock::now();
 	static auto previous_time_r = current_time;
 	static auto previous_time_g = current_time;
@@ -323,23 +319,13 @@ void GameMode::update(float elapsed) {
 	static auto previous_time_y = current_time;
 	static auto cube_play_time = current_time;
 
-	std::mt19937 mt(0xbead1234);
-
 	if (reset_sequence){
-		// target_sequence.clear();
+		target_sequence.clear();
 		reset_sequence = false;
 		// index_to_play = 0;
 		playing_target_sequence = true;
 		append_to_sequence = true;
 	}
-
-	// if (append_to_sequence){
-	// 	uint32_t random_number = mt() % 4;
-	// 	target_sequence.push_back(random_number);
-	// 	// std::cout<<target_sequence.back()<<std::endl;
-	// 	// std::cout<<random_number<<std::endl;
-	// 	append_to_sequence = false;
-	// }
 
 	if (!playing_target_sequence){ // process control inputs
 		if (controls.up && !prev_controls.up){ // need to release key and press again before registering
@@ -366,7 +352,19 @@ void GameMode::update(float elapsed) {
 		if (interaction_record.back() != target_sequence[interaction_record.size() - 1]){
 			interaction_record.clear();
 			reset_sequence = true;
-		} else append_to_sequence = true;
+		} else {
+			if (interaction_record.size() == target_sequence.size()) {
+				append_to_sequence = true;
+				playing_target_sequence = true;
+			}
+		}
+	}
+
+	if (append_to_sequence){
+		uint32_t random_number = rand() % 4;
+		target_sequence.push_back(random_number);
+		append_to_sequence = false;
+		interaction_record.clear();
 	}
 
 	float time_since_cmd_r = std::chrono::duration< float >(current_time - previous_time_r).count();
@@ -376,7 +374,7 @@ void GameMode::update(float elapsed) {
 	float time_since_last_cube = std::chrono::duration< float >(current_time - cube_play_time).count();
 
 	if (playing_target_sequence && time_since_last_cube > delay_between_cubes){ // play target 
-		std::cout<<"ts ind to play: "<<target_sequence[index_to_play]<<std::endl;
+		// std::cout<<"ts ind to play: "<<target_sequence[index_to_play]<<std::endl;
 		switch (target_sequence[index_to_play]){
 			case 0:
 				previous_time_b = current_time;
@@ -398,7 +396,7 @@ void GameMode::update(float elapsed) {
 				break;															
 		}
 		cube_play_time = current_time;
-		std::cout<<"ind to play: "<<index_to_play<<"targ seq size"<<target_sequence.size()<<std::endl;
+		// std::cout<<"ind to play: "<<index_to_play<<"targ seq size"<<target_sequence.size()<<std::endl;
 		// stop playing at end of sequence
 		if (index_to_play == (target_sequence.size())){
 			playing_target_sequence = false;
@@ -407,11 +405,11 @@ void GameMode::update(float elapsed) {
 		} 
 	}
 
-	// std::cout<<"Target sequence: ";
-	// for (const auto & elm : target_sequence){
-	// 	std::cout<<elm<<" ";
-	// }
-	// std::cout<<"\n";
+	std::cout<<"Target sequence: ";
+	for (const auto & elm : target_sequence){
+		std::cout<<elm<<" ";
+	}
+	std::cout<<"\n";
 
 
 	{ // change cube colors
