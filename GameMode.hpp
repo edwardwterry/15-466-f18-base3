@@ -43,12 +43,11 @@ struct GameMode : public Mode {
 
 	Controls prev_controls;
 
-	std::vector< uint32_t > target_sequence;
+	std::vector< uint32_t > target_sequence{0, 2, 1, 3};
 	std::vector< uint32_t > interaction_record;
 	bool reset_sequence = true;
 	bool append_to_sequence = true;
 	uint32_t index_to_play = 0; // which index of the sequence you're comparing against
-	// float warmup = 0.0f;
-	float delay_between_cubes = 0.5f;
+	float delay_between_cubes = 1.0f;
 	bool playing_target_sequence = false;
 };
