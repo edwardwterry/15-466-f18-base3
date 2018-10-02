@@ -1,6 +1,4 @@
 # Game Information
-(Note: fill in this portion with information about your game.)
-
 Title: Musical Bloom
 
 Author: Edward Terry
@@ -17,7 +15,7 @@ WASD corresponds to the layout of the boxes on the screen. A sequence of pattern
 
 Changes From The Design Document:
 
-I didn't apply either of the two elements in the title... I didn't do music because I integrated it into game 1 and the bloom was a bridge too far for my current knowledge.
+I didn't do music because I integrated it into game 1. I had a crack at modifying a shader to give a bloom effect by setting a threshold for values above which the appearance would be magnified, but I still had a hard time disambiguating how this effect changed the background versus the cubes themselves.
 
 Good / Bad / Ugly Code:
 
