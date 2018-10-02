@@ -66,7 +66,7 @@ Load< GLuint > blur_program(LoadTagDefault, [](){
 		"void main() {\n"
 		"	vec2 at = (gl_FragCoord.xy - 0.5 * textureSize(tex, 0)) / textureSize(tex, 0).y;\n"
 		//make blur amount more near the edges and less in the middle:
-		"	float amt = (0.01 * textureSize(tex,0).y) * max(0.0,(length(at) - 0.3)/0.2);\n"
+		"	float amt = 30.0*(0.01 * textureSize(tex,0).y) * max(0.0,(length(at) - 0.3)/0.2);\n"
 		//pick a vector to move in for blur using function inspired by:
 		//https://stackoverflow.com/questions/12964279/whats-the-origin-of-this-glsl-rand-one-liner
 		"	vec2 ofs = amt * normalize(vec2(\n"
@@ -74,12 +74,23 @@ Load< GLuint > blur_program(LoadTagDefault, [](){
 		"		fract(dot(gl_FragCoord.xy ,vec2(96.3869,-27.5796)))\n"
 		"	));\n"
 		//do a four-pixel average to blur:
-		"	vec4 blur =\n"
-		"		+ 0.25 * texture(tex, (gl_FragCoord.xy + vec2(ofs.x,ofs.y)) / textureSize(tex, 0))\n"
-		"		+ 0.25 * texture(tex, (gl_FragCoord.xy + vec2(-ofs.y,ofs.x)) / textureSize(tex, 0))\n"
-		"		+ 0.25 * texture(tex, (gl_FragCoord.xy + vec2(-ofs.x,-ofs.y)) / textureSize(tex, 0))\n"
-		"		+ 0.25 * texture(tex, (gl_FragCoord.xy + vec2(ofs.y,-ofs.x)) / textureSize(tex, 0))\n"
-		"	;\n"
+		// "	vec4 blur =\n"
+		// "		+ 0.25 * texture(tex, (gl_FragCoord.xy + vec2(ofs.x,ofs.y)) / textureSize(tex, 0))\n"
+		// "		+ 0.25 * texture(tex, (gl_FragCoord.xy + vec2(-ofs.y,ofs.x)) / textureSize(tex, 0))\n"
+		// "		+ 0.25 * texture(tex, (gl_FragCoord.xy + vec2(-ofs.x,-ofs.y)) / textureSize(tex, 0))\n"
+		// "		+ 0.25 * texture(tex, (gl_FragCoord.xy + vec2(ofs.y,-ofs.x)) / textureSize(tex, 0))\n"
+		// "	;\n"
+		" 	vec4 center = texture(tex, gl_FragCoord.xy / textureSize(tex, 0));\n" // Jim, the life saver yet again
+		"	vec4 blur = center;\n"
+		"	vec4 n1 = texture(tex, (gl_FragCoord.xy + vec2(ofs.x,ofs.y)) / textureSize(tex, 0));\n"
+		"	vec4 n2 = texture(tex, (gl_FragCoord.xy + vec2(-ofs.y,ofs.x)) / textureSize(tex, 0));\n"
+		"	vec4 n3 = texture(tex, (gl_FragCoord.xy + vec2(-ofs.x,-ofs.y)) / textureSize(tex, 0));\n"
+		"	vec4 n4 = texture(tex, (gl_FragCoord.xy + vec2(ofs.y,-ofs.x)) / textureSize(tex, 0));\n"
+		// https://learnopengl.com/Advanced-Lighting/Bloom
+		" 	if (dot(n1.rgb, vec3(1.0, 1.0, 1.0)) > 1.0) blur += 0.1 * n1;\n"
+		" 	if (dot(n2.rgb, vec3(1.0, 1.0, 1.0)) > 1.0) blur += 0.1 * n2;\n"
+		" 	if (dot(n3.rgb, vec3(1.0, 1.0, 1.0)) > 1.0) blur += 0.1 * n3;\n"
+		" 	if (dot(n4.rgb, vec3(1.0, 1.0, 1.0)) > 1.0) blur += 0.1 * n4;\n"
 		"	fragColor = vec4(blur.rgb, 1.0);\n" //blur;\n"
 		"}\n"
 	);
@@ -92,7 +103,6 @@ Load< GLuint > blur_program(LoadTagDefault, [](){
 
 	return new GLuint(program);
 });
-
 
 GLuint load_texture(std::string const &filename) {
 	glm::uvec2 size;
